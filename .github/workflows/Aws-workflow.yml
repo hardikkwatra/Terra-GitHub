@@ -6,8 +6,8 @@ on:
       - main
 
 jobs:
-  terraform:
-    name: Terraform
+  kubernetes:
+    name: Kubernetes
     runs-on: ubuntu-latest
 
     steps:
@@ -24,10 +24,6 @@ jobs:
         curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
         chmod +x ./kubectl
         sudo mv ./kubectl /usr/local/bin/kubectl
-        curl -Lo terraform.zip https://releases.hashicorp.com/terraform/1.0.11/terraform_1.0.11_linux_amd64.zip
-        unzip terraform.zip
-        sudo mv terraform /usr/local/bin/
-        terraform -install-autocomplete
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -36,26 +32,20 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ap-south-1
 
-    - name: Terraform Init
-      run: terraform init
-
-    - name: Terraform Destroy
-      run: terraform destroy -auto-approve
-
-    - name: Terraform Apply
-      run: terraform apply -auto-approve
-
     - name: Configure kubectl
       run: |
         aws eks update-kubeconfig --name my-eks-cluster-1 --region ap-south-1
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set region ap-south-1
 
-    - name: Apply Kubernetes Cluster
+    - name: Apply Kubernetes Cluster - Backend
       run: |
         sudo -i -u $USER bash <<EOF
         kubectl apply -f $(pwd)/backend-deployment.yaml
         EOF
 
-    - name: Apply Kubernetes Cluster 2
+    - name: Apply Kubernetes Cluster - Frontend
       run: |
         sudo -i -u $USER bash <<EOF
         kubectl apply -f $(pwd)/frontend-deployment.yaml
