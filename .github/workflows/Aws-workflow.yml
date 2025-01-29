@@ -24,13 +24,10 @@ jobs:
         curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
         chmod +x ./kubectl
         sudo mv ./kubectl /usr/local/bin/kubectl
-        curl -Lo terraform.zip https://releases.hashicorp.com/terraform/$(curl -s https://releases.hashicorp.com/terraform/ | grep -oP 'terraform/\K[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n 1)/terraform_$(curl -s https://releases.hashicorp.com/terraform/ | grep -oP 'terraform/\K[0-9]+\.[0-9]+\.[0-9]+' | sort -V | tail -n 1)_linux_amd64.zip
+        curl -Lo terraform.zip https://releases.hashicorp.com/terraform/1.0.11/terraform_1.0.11_linux_amd64.zip
         unzip terraform.zip
         sudo mv terraform /usr/local/bin/
         terraform -install-autocomplete
-
-    - name: Set up Terraform
-      uses: hashicorp/setup-terraform@v1
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
