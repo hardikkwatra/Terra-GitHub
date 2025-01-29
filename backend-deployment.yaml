@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: your-docker-image-for-backend
+        image: docker-image-for-backend
         ports:
         - containerPort: 3000
 ---
