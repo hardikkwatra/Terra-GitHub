@@ -3,14 +3,8 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# Function to check if a resource exists
-data "aws_iam_role" "existing_eks_cluster_role" {
-  name = "eks-cluster-role"
-}
-
+# Create IAM role for EKS Cluster
 resource "aws_iam_role" "eks_cluster_role" {
-  count = data.aws_iam_role.existing_eks_cluster_role.id == "" ? 1 : 0
-
   provider = aws.main
   name = "eks-cluster-role"
   assume_role_policy = jsonencode({
@@ -25,27 +19,10 @@ resource "aws_iam_role" "eks_cluster_role" {
       }
     ]
   })
-
-  lifecycle {
-    ignore_changes = all
-  }
 }
 
-resource "aws_iam_role_policy_attachment" "eks_cluster_policy_attachment" {
-  count = aws_iam_role.eks_cluster_role.id != "" ? 1 : 0
-
-  provider   = aws.main
-  role       = aws_iam_role.eks_cluster_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-}
-
-data "aws_iam_role" "existing_eks_node_role" {
-  name = "eks-node-role"
-}
-
+# Create IAM role for EKS Node Group
 resource "aws_iam_role" "eks_node_role" {
-  count = data.aws_iam_role.existing_eks_node_role.id == "" ? 1 : 0
-
   provider = aws.main
   name = "eks-node-role"
   assume_role_policy = jsonencode({
@@ -60,42 +37,6 @@ resource "aws_iam_role" "eks_node_role" {
       }
     ]
   })
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "eks_worker_node_policy_attachment" {
-  count = aws_iam_role.eks_node_role.id != "" ? 1 : 0
-
-  provider   = aws.main
-  role       = aws_iam_role.eks_node_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-}
-
-resource "aws_iam_role_policy_attachment" "eks_cni_policy_attachment" {
-  count = aws_iam_role.eks_node_role.id != "" ? 1 : 0
-
-  provider   = aws.main
-  role       = aws_iam_role.eks_node_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-}
-
-resource "aws_iam_role_policy_attachment" "eks_ecr_read_only_policy_attachment" {
-  count = aws_iam_role.eks_node_role.id != "" ? 1 : 0
-
-  provider   = aws.main
-  role       = aws_iam_role.eks_node_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-resource "aws_iam_role_policy_attachment" "ssm_managed_policy_attachment" {
-  count = aws_iam_role.eks_node_role.id != "" ? 1 : 0
-
-  provider   = aws.main
-  role       = aws_iam_role.eks_node_role[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # Create VPC
@@ -179,7 +120,7 @@ resource "aws_security_group" "eks_security_group" {
 resource "aws_eks_cluster" "my_eks_cluster" {
   provider = aws.main
   name     = "my-eks-cluster"
-  role_arn = aws_iam_role.eks_cluster_role[0].arn
+  role_arn = aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
     subnet_ids         = [aws_subnet.my_subnet_1.id, aws_subnet.my_subnet_2.id]
@@ -191,7 +132,7 @@ resource "aws_eks_cluster" "my_eks_cluster" {
 resource "aws_eks_node_group" "my_node_group" {
   provider      = aws.main
   cluster_name  = aws_eks_cluster.my_eks_cluster.name
-  node_role_arn = aws_iam_role.eks_node_role[0].arn
+  node_role_arn = aws_iam_role.eks_node_role.arn
   subnet_ids    = [aws_subnet.my_subnet_1.id, aws_subnet.my_subnet_2.id]
   instance_types = ["t2.micro"]
 
@@ -211,40 +152,6 @@ resource "aws_eks_node_group" "my_node_group" {
 }
 
 # MongoDB (AWS DocumentDB)
-data "aws_docdb_subnet_group" "existing_docdb_subnet_group" {
-  name = "my-docdb-subnet-group"
-}
-
-resource "aws_docdb_subnet_group" "docdb_subnet_group" {
-  count = data.aws_docdb_subnet_group.existing_docdb_subnet_group.id == "" ? 1 : 0
-
-  provider     = aws.main
-  name         = "my-docdb-subnet-group"
-  description  = "Subnet group for DocumentDB"
-  subnet_ids   = [aws_subnet.my_subnet_1.id, aws_subnet.my_subnet_2.id]
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-resource "aws_docdb_cluster" "mongodb" {
-  provider              = aws.main
-  cluster_identifier    = "my-docdb-cluster"
-  engine                = "docdb"
-  master_username       = "username"
-  master_password       = "password"
-  backup_retention_period = 5
-  preferred_backup_window = "07:00-09:00"
-  vpc_security_group_ids  = [aws_security_group.eks_security_group.id]
-  db_subnet_group_name    = aws_docdb_subnet_group.docdb_subnet_group.name
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
-# MongoDB (AWS DocumentDB) continued...
 resource "aws_docdb_cluster_instance" "example" {
   provider              = aws.main
   count                 = 2
@@ -300,13 +207,7 @@ resource "aws_instance" "nginx" {
 }
 
 # IAM Roles & Policies
-data "aws_iam_role" "existing_example_role" {
-  name = "example-role"
-}
-
 resource "aws_iam_role" "example" {
-  count = data.aws_iam_role.existing_example_role.id == "" ? 1 : 0
-
   provider = aws.main
   name = "example-role"
 
@@ -325,8 +226,4 @@ resource "aws_iam_role" "example" {
   ]
 }
 EOF
-
-  lifecycle {
-    ignore_changes = all
-  }
 }
