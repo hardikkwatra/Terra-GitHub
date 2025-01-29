@@ -20,7 +20,7 @@ jobs:
         sudo apt-get install -y unzip
         curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
         unzip awscliv2.zip
-        sudo ./aws/install
+        sudo ./aws/install --update
         curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
         chmod +x ./kubectl
         sudo mv ./kubectl /usr/local/bin/kubectl
@@ -29,14 +29,15 @@ jobs:
         sudo mv terraform /usr/local/bin/
         terraform -install-autocomplete
 
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+
     - name: Configure AWS Credentials
-      run: |
-        mkdir -p ~/.aws
-        echo "[default]" > ~/.aws/credentials
-        echo "aws_access_key_id = AKIARWPFIV23K7LPS2QO" >> ~/.aws/credentials
-        echo "aws_secret_access_key = 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" >> ~/.aws/credentials
-        echo "[default]" > ~/.aws/config
-        echo "region = ap-south-1" >> ~/.aws/config
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
 
     - name: Terraform Validate
       run: terraform validate
