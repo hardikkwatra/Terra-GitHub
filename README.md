@@ -8,7 +8,7 @@ This project provisions a cloud infrastructure to support a decentralized applic
 
 ### Architecture Diagram
 
-![Architecture Diagram](link-to-architecture-diagram)
+![Architecture Diagram]([link-to-architecture-diagram](https://github.com/hardikkwatra/Terra-GitHub/blob/63afac42d619572fce85447669094b28a9194d1d/Screenshot%202025-01-29%20175908.png))
 
 ### Required Cloud Resources
 
