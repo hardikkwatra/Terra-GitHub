@@ -49,8 +49,14 @@ jobs:
       run: |
         aws eks update-kubeconfig --name my-eks-cluster-1 --region ap-south-1
 
-    - name: Apply Kubernetes Manifests
+    - name: Apply Kubernetes Cluster
       run: |
         sudo -i -u $USER bash <<EOF
-        kubectl apply -f $(pwd)/
+        kubectl apply -f $(pwd)/backend-deployment.yaml
+        EOF
+
+    - name: Apply Kubernetes Cluster 2
+      run: |
+        sudo -i -u $USER bash <<EOF
+        kubectl apply -f $(pwd)/frontend-deployment.yaml
         EOF
